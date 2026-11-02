@@ -623,6 +623,35 @@ end)
 describe('API nvim__win_screen_map', function()
   before_each(clear)
 
+  it('stale rows that name lines past the end (shrunk buffer, other buffer) do not crash', function()
+    local screen = Screen.new(30, 10)
+    local lines = {}
+    for i = 1, 50 do
+      lines[i] = 'line ' .. i
+    end
+    api.nvim_buf_set_lines(0, 0, -1, true, lines)
+    local ns = api.nvim_create_namespace('sm_stale')
+    api.nvim_buf_set_extmark(0, ns, 5, 0, { virt_lines = { { { 'virt' } } } })
+    n.command('diffthis')
+    n.command('normal! G')
+    screen:expect({ any = 'line 50' })
+    local res = n.exec_lua(function()
+      local out = {}
+      vim.api.nvim_buf_set_lines(0, 0, -1, true, { 'only' })
+      out[1] = vim.api.nvim__win_screen_map(0, { cells = true })
+      out[2] = vim.api.nvim__win_screen_cells(0, { { 0, 0 } }, {})
+      local b = vim.api.nvim_create_buf(false, true)
+      vim.api.nvim_win_set_buf(0, b)
+      out[3] = vim.api.nvim__win_screen_map(0, {})
+      out[4] = vim.api.nvim__win_screen_cells(0, { { 0, 0 } }, {})
+      return { out[1].valid, #out[1].rows, out[2][1].valid, out[3].valid, #out[3].rows, out[4][1].valid }
+    end)
+    eq({ false, res[2], false, false, res[5], false }, res)
+    eq(api.nvim_win_get_height(0), res[2])
+    eq(api.nvim_win_get_height(0), res[5])
+    n.assert_alive()
+  end)
+
   it('rows add up to the window height', function()
     local screen = Screen.new(30, 12)
     api.nvim_buf_set_lines(0, 0, -1, true, { long, 'two', long, 'four' })
