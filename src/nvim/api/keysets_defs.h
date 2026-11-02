@@ -252,6 +252,16 @@ typedef struct {
 } Dict(win_text_height);
 
 typedef struct {
+  OptionalKeys is_set__win_screen_cells_;
+  Boolean abs;
+} Dict(win_screen_cells);
+
+typedef struct {
+  OptionalKeys is_set__win_screen_map_;
+  Boolean cells;
+} Dict(win_screen_map);
+
+typedef struct {
   OptionalKeys is_set__clear_autocmds_;
   Buffer buffer;  // deprecated - use buf
   Buffer buf;
